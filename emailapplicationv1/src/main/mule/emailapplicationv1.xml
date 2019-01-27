@@ -1,34 +1,96 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="39a8e2ba-4394-44bf-859d-22b37b97294c" >
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
 	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="77300fcc-4767-4e52-8ca1-93f2e0bcb57a" >
 		<http:request-connection host="localhost" port="8085" />
 	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="2d508dde-df3b-49f4-a028-ec548ff9e302" >
+		<db:my-sql-connection host="localhost" port="3306" user="mulesoft" password="mulesoft" database="emailapplication" />
+	</db:config>
 	<flow name="createAccountFlow" doc:id="4d2183be-0265-450b-b54c-44606f9bb871" >
 		<http:listener doc:name="Listener For Creating An Account" doc:id="9ceebdfc-d376-449a-b159-fca8c8fcb110" config-ref="HTTP_Listener_config" path="/createAccount" allowedMethods="POST"/>
 		<set-variable value="#[message.payload.username]" doc:name="Set Username Variable" doc:id="32ef44b1-c14c-40da-bd9d-5ab57cde8430" variableName="username"/>
 		<set-variable value="#[message.payload.password]" doc:name="Set Password Variable" doc:id="ac95bd2c-bcea-46ff-b61a-4d5f1cd564f4" variableName="password"/>
 		<logger level="ERROR" doc:name="Logger" doc:id="1f506a58-f8f3-4fa7-9b42-3194916fbe04" message='#["An attempt is being made to create an account with the username=" ++ vars.username ++ ", and password=" ++ vars.password]'/>
-		<ee:transform doc:name="Transform Message" doc:id="a57966b4-d438-4b9f-ba2e-e222d195e746" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<try doc:name="Try Create Account" doc:id="1d2fe6f7-dbed-40a3-bb8c-cfe6b365e051">
+			<db:insert doc:name="Insert Into Users For Account Creation" doc:id="6d05c8e4-b2ed-4e95-bc2e-3bdda14b9922" config-ref="Database_Config">
+				<db:sql >INSERT INTO users (username, password) VALUES (:username, :password)</db:sql>
+				<db:input-parameters ><![CDATA[#[{
+	username : vars.username,
+	password : vars.password
+}]]]></db:input-parameters>
+			</db:insert>
+			<logger level="INFO" doc:name="Logger For Database Creation Success" doc:id="ba8827d1-d98b-4a10-90db-95376d4f78ea" message="User account created successfully" />
+			<ee:transform doc:name="Transform Message" doc:id="111c9e99-7bd2-4c3e-86f0-26184706c44d" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
-{
-	username : "Mark",
-	password : "password"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="4f16207a-9c03-4254-9795-82bf32923c97" />
-		<http:request method="POST" doc:name="Request For Successful Account Creation Page" doc:id="2e350c7a-57eb-4827-b524-dac2cd353a69" config-ref="HTTP_Request_configuration" outputMimeType="text/html" path="/accountCreationSuccess">
-		</http:request>
+username : vars.username
+]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-payload value="#[payload]" doc:name="Set Payload" doc:id="671c194a-176c-4546-a4d0-a1f7d0632ca2" mimeType="text/html" />
+			<http:request method="POST" doc:name="Request" doc:id="6798fbcc-5eca-43ce-8873-ec905df8eb75" config-ref="HTTP_Request_configuration" path="/accountCreatedSuccess" />
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="262cec82-9017-4661-baaf-af6e67018e43" type="ANY">
+					<logger level="ERROR" doc:name="Logger For Database Failure " doc:id="724f2c16-a2f7-4686-b84e-4d7331c628d9" message="An error occurred when attempting to create a user account - possible duplicate user" />
+					<ee:transform doc:name="Transform Message" doc:id="58f83961-89f5-43b6-a12a-1748c998e9ea">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+username : vars.username
+]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<set-payload value="#[message.payload]" doc:name="Set Payload" doc:id="985f766f-89f6-4ad5-b40b-3a25bdefcafd" />
+					<http:request method="GET" doc:name="Request" doc:id="65ea345f-5ecb-4820-9725-3d2ae0be9981" config-ref="HTTP_Request_configuration" path="/accountCreationFailure" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="loginFlow" doc:id="7e0579a6-39a1-4d57-92cf-1473283c2c1b" >
+		<http:listener doc:name="Listener For Login Into An Account" doc:id="e12658dd-83af-4fe6-baf6-e97a29439530" config-ref="HTTP_Listener_config" path="/login" allowedMethods="POST"/>
+		<set-variable value="#[message.payload.username]" doc:name="Set Username Variable" doc:id="126d4a28-4841-46cd-b9e3-a2359518fa22" variableName="username" />
+		<set-variable value="#[message.payload.password]" doc:name="Set Password Variable" doc:id="e5dcc118-a616-427d-95c9-f174c984696e" variableName="password" />
+		<logger level="INFO" doc:name="Logger" doc:id="8f6c9aa2-ca24-4cf9-8620-483886c08a58" message='#["An attempt is being made to login with the username=" ++ vars.username ++ ", and password=" ++ vars.password]' />
+		<try doc:name="Try To Select The Login Credentials" doc:id="aa8d04b8-f9c0-4cbc-bcd6-905e8bdd33c0" >
+			<set-variable value="" doc:name="Set Usernameresult Variable To Blank For Query" doc:id="39a42942-0f3a-499a-98c9-09ae1cabcf42" variableName="usernameresult "/>
+			<db:select doc:name="Select" doc:id="a81f46bd-d5ab-4703-b6d4-e386b219ca67" config-ref="Database_Config" queryTimeoutUnit="MINUTES" maxRows="1">
+			<db:sql>SELECT username FROM users WHERE username = :username AND password = :password</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	username : vars.username,
+	password : vars.password
+}]]]></db:input-parameters>
+		</db:select>
+			<ee:transform doc:name="Transform Message" doc:id="011f080c-0cdb-4cad-9736-757e0458e080" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-payload value="#[payload]" doc:name="Set Payload" doc:id="04d769af-6205-4ef0-8f4d-30e424cea5e9" />
+			<logger level="ERROR" doc:name="Logger" doc:id="2375ce74-f394-40b8-8f6a-1778683b1e77" message='#[payload]' />
+			<choice doc:name="Choice" doc:id="e02dd5f7-317a-42d8-a18e-62f46de902fb" >
+				<when expression='#[(payload.username) != null]'>
+					<logger level="ERROR" doc:name="Logger" doc:id="4448b563-7124-4541-93ac-b1ee9c8eaf2a" message='#[(payload.username)]'/>
+					<http:request method="GET" doc:name="Request" doc:id="72dce797-b963-442a-827a-e77be9fa0e75" config-ref="HTTP_Request_configuration" path="/loginSuccess"/>
+				</when>
+				<otherwise >
+					<http:request method="GET" doc:name="Request" doc:id="6835a427-2c32-4baa-b70a-9c0dcc763150" config-ref="HTTP_Request_configuration" path="/accountCreation"/>
+				</otherwise>
+			</choice>
+		</try>
 	</flow>
 </mule>
