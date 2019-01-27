@@ -14,13 +14,14 @@ var app = express();
 
 var qs = require('querystring');
 
-//var XMLHttpRequest = require('');
-// var xhr = new XMLHttpRequest();
+
 
 // Create a server object
 http.createServer(function (request, response) {
 	
 	console.log("The request url is: "+ request.url);
+
+	
 
 	// The landing/home page which shows the Login and
 	// 'Create Account' buttons
@@ -54,6 +55,43 @@ http.createServer(function (request, response) {
 		response.write("</head>"); 
 		response.write("<body>"); 
 	    response.write("<h1>The Login Page</h1>");
+	    response.write("<form action='http://localhost:8081/login' method='POST'>");
+		response.write("Username: <input type='text' id='username' name='username' /><br>");
+		response.write("Password: <input type='text' id='password' name='password' /><br>");
+		response.write("<input type='submit' value='Login'>");
+		response.write("</form>");
+	    response.write("</body>");
+		response.write("</html>");
+	} 
+
+	if (request.url == "/loginSuccess") {
+
+		console.log("Rendering login success page: ");
+
+		// Write the HTML login page output to the response
+		response.writeHead(200, {'Content-Type': 'text/html'});
+		response.write("<html>"); 
+		response.write("<head>");  
+		response.write("<title>Email Application Login page</title>"); 
+		response.write("</head>"); 
+		response.write("<body>"); 
+	    response.write("<h1>You have successfully Logged in</h1>");
+	    response.write("</body>");
+		response.write("</html>");
+	} 
+
+	if (request.url == "/loginFailure") {
+
+		console.log("Rendering login failure page: ");
+
+		// Write the HTML login page output to the response
+		response.writeHead(200, {'Content-Type': 'text/html'});
+		response.write("<html>"); 
+		response.write("<head>");  
+		response.write("<title>Email Application Login page</title>"); 
+		response.write("</head>"); 
+	    response.write("<h1>You have failed to login to the application</h1>");
+		response.write("<body>"); 
 	    response.write("</body>");
 		response.write("</html>");
 	} 
@@ -72,78 +110,102 @@ http.createServer(function (request, response) {
 		response.write("<form action='http://localhost:8081/createAccount' method='POST'>");
 		response.write("Username: <input type='text' id='username' name='username' /><br>");
 		response.write("Password: <input type='text' id='password' name='password' /><br>");
-		response.write("<input type='submit' value='Submit'>");
+		response.write("<input type='submit' value='Register Account'>");
 		response.write("</form>");
 		response.write("</body>");
 		response.write("</html>");
 	}
+ 
+	if (request.url == "/accountCreatedSuccess") {
 
-	if (request.url == "/accountCreationSuccess") {
+		var jsonString = '';
+		var result = '';
 
-		//var xmlhttp = new XMLHttpRequest();
-		
-
-		console.log("Rendering account creation success page: ");
-
-		//app.use(express.json());
-
-		console.log("1=The request is: "+ request.body);
-
-		//app.post('*', function(request, response){
-  				      // your JSON
-  			// response.send(request.body);    // echo the result back
-		//});
-
-		/* xmlhttp.onreadystatechange = function() {
-		  if (this.readyState == 4 && this.status == 200) {
-		    var myObj = JSON.parse(this.body);
-		    	console.log("parsedJSON = "+ myObj);
-		  }
-		};
-		xmlhttp.open("POST", "/accountCreationSuccess", true);
-		xmlhttp.send();  */
-
-
-		//var parsedParameters1 = JSON.parse(this.body);
-		//var parsedParameters2 = JSON.stringify(parsedParameters1);
-
-		//xmlhttp.setRequestHeader("Content-type", "text/html");
-		//xmlhttp.send(parsedParameters1);
-
-		// Parse the URL
-		//var parsedParameters = url.parse(request.url, true);
-
-		//var queryResult = parsedParameters.query;
-
-
-		//console.log("parsedParameters1: "+ parsedParameters1);
-		//console.log("parsedParameters2: "+ parsedParameters2);
-		//console.log(request.body);
-       // console.log(queryResult);
-
-		//console.log("Rendering account creation success page: ");
-		//console.log("parsedParameters: " + request.body.username);
-		//console.log("queryResult: " + request.body.password);
-
-
-		// Write the HTML login page output to the response
-		response.writeHead(200, {'Content-Type': 'text/html'});
+	    response.writeHead(200, {'Content-Type': 'text/html'});
 		response.write("<html>"); 
 		response.write("<head>");  
 		response.write("<title>Email Application Account Created Successfully page</title>"); 
 		response.write("</head>"); 
 		response.write("<body>"); 
-	    response.write("<h1>Account Created Successfully</h1>");
-	    response.write("<br>");
-		response.write("Username=");
+		response.write("<h1>Account Created Successfully</h1>");
 		response.write("<br>");
-		response.write("Password=");
-	    response.write("</body>");
+
+		var username = function (request) {
+
+			if (request.method == 'POST') {
+		        jsonString = '';
+
+		        request.on('data', function (data) {
+		            jsonString += data;
+					result = JSON.parse(jsonString);
+					console.log("username in getUsername is "+ result.username);
+					return result.username;
+		            
+		        });
+			}
+		};
+
+		// response.write("Username="+ username(request));
+
+		/** This does not return the username come what may..
+
+			var myCallback = function(data) {
+		  console.log('got data: '+data);
+		};
+
+		var usingItNow = function(callback) {
+		  callback('get it?');
+		};
+
+		usingItNow(myCallback);
+
+		*/
+		response.write("<a href='http://localhost:8085/login'><button>Login</button></a>"); 
+		response.write("<br>");
+		response.write("</body>");
+		response.write("</html>"); 
+	}	
+
+	if (request.url == "/accountCreationFailure") {
+
+ 		response.writeHead(200, {'Content-Type': 'text/html'});
+		response.write("<html>"); 
+		response.write("<head>");  
+		response.write("<title>Email Application Account Creation Failure page</title>"); 
+		response.write("</head>"); 
+		response.write("<body>"); 
+		response.write("<h1>The Account was not created as the username already exists. Please try again.</h1>");
+		response.write("<br>");
+		response.write("<a href='http://localhost:8085/accountCreation'><button>Create Account</button></a>"); 
+		response.write("</body>");
 		response.write("</html>"); 
 	}
+
+	if (request.url == "/passwordIncorrect") {
+
+ 		response.writeHead(200, {'Content-Type': 'text/html'});
+		response.write("<html>"); 
+		response.write("<head>");  
+		response.write("<title>Email Application Account Login Failure page</title>"); 
+		response.write("</head>"); 
+		response.write("<body>"); 
+		response.write("<h1>The Account was not logged into as the password was incorrect. Please try again.</h1>");
+		response.write("<br>");
+		response.write("<a href='http://localhost:8085/login'><button>Login</button></a>"); 
+		response.write("</body>");
+		response.write("</html>"); 
+	}
+
+	
+
 
 	// End the response
 	response.end(); 
 
 
-}).listen(8085); // Ensure the server object listens on port 8085
+}
+
+
+
+
+).listen(8085); // Ensure the server object listens on port 8085

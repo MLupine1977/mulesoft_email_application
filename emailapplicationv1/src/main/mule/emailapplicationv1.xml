@@ -65,7 +65,7 @@ username : vars.username
 		<logger level="INFO" doc:name="Logger" doc:id="8f6c9aa2-ca24-4cf9-8620-483886c08a58" message='#["An attempt is being made to login with the username=" ++ vars.username ++ ", and password=" ++ vars.password]' />
 		<try doc:name="Try To Select The Login Credentials" doc:id="aa8d04b8-f9c0-4cbc-bcd6-905e8bdd33c0" >
 			<set-variable value="" doc:name="Set Usernameresult Variable To Blank For Query" doc:id="39a42942-0f3a-499a-98c9-09ae1cabcf42" variableName="usernameresult "/>
-			<db:select doc:name="Select" doc:id="a81f46bd-d5ab-4703-b6d4-e386b219ca67" config-ref="Database_Config" queryTimeoutUnit="MINUTES" maxRows="1">
+			<db:select doc:name="Select For Username Where Credentials Are Corrrect" doc:id="a81f46bd-d5ab-4703-b6d4-e386b219ca67" config-ref="Database_Config" queryTimeoutUnit="MINUTES" maxRows="1">
 			<db:sql>SELECT username FROM users WHERE username = :username AND password = :password</db:sql>
 			<db:input-parameters><![CDATA[#[{
 	username : vars.username,
@@ -88,7 +88,31 @@ payload]]></ee:set-payload>
 					<http:request method="GET" doc:name="Request" doc:id="72dce797-b963-442a-827a-e77be9fa0e75" config-ref="HTTP_Request_configuration" path="/loginSuccess"/>
 				</when>
 				<otherwise >
-					<http:request method="GET" doc:name="Request" doc:id="6835a427-2c32-4baa-b70a-9c0dcc763150" config-ref="HTTP_Request_configuration" path="/accountCreation"/>
+					<db:select doc:name="Select For Username Where Password Credential Could Be Incorrrect" doc:id="36db2c7f-9712-4ca3-9f54-259ca7d70f8b" config-ref="Database_Config" queryTimeoutUnit="MINUTES" maxRows="1">
+						<db:sql>SELECT username FROM users WHERE username = :username</db:sql>
+						<db:input-parameters><![CDATA[#[{
+	username : vars.username
+}]]]></db:input-parameters>
+					</db:select>
+					<ee:transform doc:name="Transform Message" doc:id="399b53e9-b57b-4810-b558-47d47b8c8b3c">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<set-payload value="#[payload]" doc:name="Set Payload" doc:id="4acdd1eb-c304-4061-be02-f62f972dda4e" />
+					<choice doc:name="Choice" doc:id="5373a4e0-5ef9-4d91-a00b-f9d67cff49d0" >
+						<when expression="#[(payload.username) != null]">
+							<logger level="INFO" doc:name="Logger" doc:id="1a496ca2-bb4f-43ff-9526-e6694f06d5f8" message="Username is valid but the password is incorrect" />
+							<http:request method="GET" doc:name="Request" doc:id="03ede9e6-994e-4db3-a679-2f622b3c5bfb" config-ref="HTTP_Request_configuration" path="/passwordIncorrect" />
+						</when>
+						<otherwise >
+							<logger level="INFO" doc:name="Logger" doc:id="ac60ab5f-ac4a-4ced-88eb-92d6e53bc7f2" message="Redirecting to accountCreation" />
+							<http:request method="GET" doc:name="Request" doc:id="6835a427-2c32-4baa-b70a-9c0dcc763150" config-ref="HTTP_Request_configuration" path="/accountCreation" />
+						</otherwise>
+					</choice>
 				</otherwise>
 			</choice>
 		</try>
