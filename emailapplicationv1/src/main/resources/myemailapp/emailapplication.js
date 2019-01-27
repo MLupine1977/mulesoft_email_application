@@ -196,6 +196,19 @@ http.createServer(function (request, response) {
 		response.write("</html>"); 
 	}
 
+	if (request.url == "/inbox") {
+
+ 		response.writeHead(200, {'Content-Type': 'text/html'});
+		response.write("<html>"); 
+		response.write("<head>");  
+		response.write("<title>Email Application Account Inbox page</title>"); 
+		response.write("</head>"); 
+		response.write("<body>"); 
+		response.write("<h1>User Inbox.</h1>");
+		response.write("</body>");
+		response.write("</html>");
+	}
+
 	
 
 

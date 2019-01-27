@@ -85,7 +85,7 @@ payload]]></ee:set-payload>
 			<choice doc:name="Choice" doc:id="e02dd5f7-317a-42d8-a18e-62f46de902fb" >
 				<when expression='#[(payload.username) != null]'>
 					<logger level="ERROR" doc:name="Logger" doc:id="4448b563-7124-4541-93ac-b1ee9c8eaf2a" message='#[(payload.username)]'/>
-					<http:request method="GET" doc:name="Request" doc:id="72dce797-b963-442a-827a-e77be9fa0e75" config-ref="HTTP_Request_configuration" path="/loginSuccess"/>
+					<flow-ref doc:name="Flow Reference For Inbox Subflow" doc:id="4f039114-9a3b-433a-926b-7801ff86cc22" name="inboxSubFlow"/>
 				</when>
 				<otherwise >
 					<db:select doc:name="Select For Username Where Password Credential Could Be Incorrrect" doc:id="36db2c7f-9712-4ca3-9f54-259ca7d70f8b" config-ref="Database_Config" queryTimeoutUnit="MINUTES" maxRows="1">
@@ -117,4 +117,7 @@ payload]]></ee:set-payload>
 			</choice>
 		</try>
 	</flow>
+	<sub-flow name="inboxSubFlow" doc:id="acf83942-3d2e-4ecf-90dc-a1a88fb8e360" >
+		<http:request method="GET" doc:name="Request" doc:id="c74ebfb1-525e-4100-91af-ae5ce4a3948f" config-ref="HTTP_Request_configuration" path="/inbox"/>
+	</sub-flow>
 </mule>
