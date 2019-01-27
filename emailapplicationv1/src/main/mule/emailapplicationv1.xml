@@ -118,6 +118,30 @@ payload]]></ee:set-payload>
 		</try>
 	</flow>
 	<sub-flow name="inboxSubFlow" doc:id="acf83942-3d2e-4ecf-90dc-a1a88fb8e360" >
+		<db:select doc:name="Select All Emails For User" doc:id="560c5e09-af19-4a1e-9b5f-f76c309a355f" config-ref="Database_Config">
+			<db:sql >SELECT * FROM emails WHERE to1 = :username AND deleted = :deletedFalse</db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	username : vars.username,
+	deletedFalse : '0'
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="19315b7d-623d-4e7b-9321-69f887d61c8c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+emails: payload map ((email) -> {
+	"id" : email.id,
+	"from1": email.from1,
+	"subject" : email.subject,
+	"body" : email.body,
+	"readValue" : email.readvalue
+})
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="d9838c0b-93dc-4fec-8a36-0db5f736a1ff" />
+		<logger level="INFO" doc:name="Logger" doc:id="16e19f7a-85e3-46e0-854d-6572f62d6d32" message="#[payload]"/>
 		<http:request method="GET" doc:name="Request" doc:id="c74ebfb1-525e-4100-91af-ae5ce4a3948f" config-ref="HTTP_Request_configuration" path="/inbox"/>
 	</sub-flow>
 	<flow name="newEmailFlow" doc:id="6ad60027-adc0-481e-bcb1-b81c1888d1b2" >
