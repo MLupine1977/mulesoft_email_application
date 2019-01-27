@@ -120,4 +120,12 @@ payload]]></ee:set-payload>
 	<sub-flow name="inboxSubFlow" doc:id="acf83942-3d2e-4ecf-90dc-a1a88fb8e360" >
 		<http:request method="GET" doc:name="Request" doc:id="c74ebfb1-525e-4100-91af-ae5ce4a3948f" config-ref="HTTP_Request_configuration" path="/inbox"/>
 	</sub-flow>
+	<flow name="newEmailFlow" doc:id="6ad60027-adc0-481e-bcb1-b81c1888d1b2" >
+		<http:listener doc:name="Listener For Composing a New Email" doc:id="397939cd-67a2-4265-adb4-b81a3fd4ffa0" config-ref="HTTP_Listener_config" path="/newEmail"/>
+		<http:request method="GET" doc:name="Request" doc:id="c1a78610-7d56-48f5-89c1-bb7e98cf6aea" config-ref="HTTP_Request_configuration" path="/composeNewEmail"/>
+	</flow>
+	<flow name="insertEmailFlow" doc:id="0330b8f1-5d17-48d2-8d12-ec2f1c02fbf7" >
+		<http:listener doc:name="Listener For An Insertion Of A New Email" doc:id="a6b1fc31-84e3-417a-bb2b-9215eb1624a4" config-ref="HTTP_Listener_config" path="/insertEmail"/>
+		<http:request method="GET" doc:name="Request" doc:id="14e17ae6-969a-46b9-86b3-dcf33acff743" config-ref="HTTP_Request_configuration" path="/inbox"/>
+	</flow>
 </mule>

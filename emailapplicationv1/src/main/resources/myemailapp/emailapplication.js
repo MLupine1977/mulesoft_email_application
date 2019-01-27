@@ -21,8 +21,6 @@ http.createServer(function (request, response) {
 	
 	console.log("The request url is: "+ request.url);
 
-	
-
 	// The landing/home page which shows the Login and
 	// 'Create Account' buttons
 	if (request.url == "/") {
@@ -64,7 +62,7 @@ http.createServer(function (request, response) {
 		response.write("</html>");
 	} 
 
-	if (request.url == "/loginSuccess") {
+	/* if (request.url == "/loginSuccess") {
 
 		console.log("Rendering login success page: ");
 
@@ -94,7 +92,7 @@ http.createServer(function (request, response) {
 		response.write("<body>"); 
 	    response.write("</body>");
 		response.write("</html>");
-	} 
+	} */
 
 	if (request.url == "/accountCreation") {
 		console.log("Rendering createAccount page: ");
@@ -205,6 +203,43 @@ http.createServer(function (request, response) {
 		response.write("</head>"); 
 		response.write("<body>"); 
 		response.write("<h1>User Inbox.</h1>");
+		response.write("<br>");
+
+		response.write("<table>");
+		response.write("<tr><th>From</th><th>Subject</th><th>Body</th><th>Delete</th></tr>");
+
+		// Iterate here over elements when I have worked out how to get the JSON from the request as
+		// a defintive value and not undefined
+
+		response.write("</table>");
+		response.write("<br>"); 
+		response.write("<a href='http://localhost:8081/newEmail'><button>Compose New Email</button></a>"); 
+		response.write("<br>");
+		response.write("</body>");
+		response.write("</html>");
+	}
+
+	if (request.url == "/composeNewEmail") {
+		
+ 		response.writeHead(200, {'Content-Type': 'text/html'});
+		response.write("<html>"); 
+		response.write("<head>");  
+		response.write("<title>Email Application Account Compose New Email page</title>"); 
+		response.write("</head>"); 
+		response.write("<body>"); 
+		response.write("<h1>Compose New Email.</h1>");
+		response.write("<br>");
+
+		response.write("<form action='http://localhost:8081/insertEmail' method='POST'>");
+
+		// Insert drop down of selected to1 users parsed from the JSON 
+		response.write("To: <select><option value='?'>?</option></select><br>");
+
+		response.write("Subject: <input type='text' id='subject' name='subject' /><br>");
+		response.write("Body: <input type='textarea' id='body' name='body' /><br>");
+		response.write("<input type='submit' value='Insert Email'>");
+		response.write("</form>");
+		response.write("<br>");
 		response.write("</body>");
 		response.write("</html>");
 	}
